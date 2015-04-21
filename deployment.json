@@ -1,6 +1,6 @@
 {
-  "name" : "Symfony",
-  "display_name" : "symfony",
+  "name" : "symfony",
+  "display_name" : "Symfony",
   "version" : "1.0.0",
   "type": ["zray", "route"],
   "logo": "logo.png"
