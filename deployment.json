@@ -1,8 +1,14 @@
 {
   "name" : "symfony",
   "display_name" : "Symfony",
-  "version" : "1.0.0",
+  "version" : "1.0.1",
   "type": ["zray", "route"],
   "logo": "logo.png",
-  "eula": "LICENSE.txt"
+  "eula": "LICENSE.txt",
+  "readme": "README.txt",
+  "dependencies": {
+    "plugin": {
+        "min": "1.0.0"
+    }
+  }
 }
