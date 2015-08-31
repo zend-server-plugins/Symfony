@@ -178,6 +178,19 @@ class Symfony {
 
 	}
 	
+	public function logAddRecordExit($context, &$storage) {
+		static $logCount = 0;
+
+		$record = $context['locals']['record'];
+		
+
+		$storage['Monolog'][] = array(
+						'#' => ++$logCount,
+						'message' => $record['message'],
+						'level' => $record['level_name'],
+						'channel' => $record['channel'],
+					);
+	}
 }
 
 $zre = new \ZRayExtension("symfony");
@@ -195,3 +208,6 @@ $zre->traceFunction("Symfony\Component\HttpKernel\Kernel::terminate", function()
 $zre->traceFunction("Symfony\Component\HttpKernel\HttpKernel::handle", function(){}, array($zraySymfony, 'handleRequestExit'));
 $zre->traceFunction("Symfony\Component\EventDispatcher\EventDispatcher::dispatch", function(){}, array($zraySymfony, 'eventDispatchExit'));
 $zre->traceFunction("AppKernel::registerBundles", function(){}, array($zraySymfony, 'registerBundlesExit'));
+$zre->traceFunction("Monolog\Logger::addRecord", function(){}, array($zraySymfony, 'logAddRecordExit'));
+
+
