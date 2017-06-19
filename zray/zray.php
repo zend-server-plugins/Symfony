@@ -180,15 +180,19 @@ class Symfony {
 	
 	public function logAddRecordExit($context, &$storage) {
 		static $logCount = 0;
+		$levelnames = array (
+			100 => 'Debug', 200 => 'Info', 250 => 'Notice', 300 => 'Warning', 400 => 'Error',
+			500 => 'Critical', 550 => 'Alert', 600 => 'Emergency'
+		);
 
-		$record = $context['locals']['record'];
-		
+		$level = $context['functionArgs'][0];
+		$message = $context['functionArgs'][1];
 
 		$storage['Monolog'][] = array(
 						'#' => ++$logCount,
-						'message' => $record['message'],
-						'level' => $record['level_name'],
-						'channel' => $record['channel'],
+						'message' => $message,
+						'level' => isset ($levelnames[$level]) ? $levelnames[$level] : $level,
+						'channel' => $context['this']->getName(),
 					);
 	}
 }
