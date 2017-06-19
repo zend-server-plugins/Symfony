@@ -12,6 +12,8 @@ class Symfony {
 	private $tracedAlready = false;
 	private $zre = null;
 
+	const NULL_ON_INVALID_REFERENCE = 2;
+
 	public function setZRE($zre) {
 		$this->zre = $zre;
 	}
@@ -19,11 +21,12 @@ class Symfony {
 
 	public function eventDispatchExit($context, &$storage) {
 		if(!$context['functionArgs'][1]) { return; }
+		$eventname = $context['functionArgs'][0];
 		$event = $context['functionArgs'][1];
 		$storage['events'][] = array(	
-						'name' => $event->getName(),
+						'name' => $eventname,
 						'type' => get_class($event),
-						'dispatcher' => get_class($event->getDispatcher()),
+						'dispatcher' => get_class($context['this']),
 						'propagation stopped' => $event->isPropagationStopped(),
 						);
 	}
@@ -89,6 +92,7 @@ class Symfony {
 		$listeners = $thisCtx->getContainer()->get('event_dispatcher')->getListeners();
 
 		foreach ($listeners as $listenerName => $listener) {
+
 			$listenerEntry = array();
 			$handlerEntries = array();
 			foreach ($listener as $callable) {
@@ -114,9 +118,17 @@ class Symfony {
 			}
 		}
 		$storage['listeners'][] = $listenerEntries;
-		$securityCtx = $thisCtx->getContainer()->get('security.context');
-		$securityToken = ($securityCtx ? $securityCtx->getToken() : null);
 
+		$container = $thisCtx->getContainer();
+		// Older versions of Symfony used security.context.  This was changed to security.token_storage in 2.6.
+		$securityCtx = $thisCtx->getContainer()->get('security.context', self::NULL_ON_INVALID_REFERENCE);
+		if ($securityCtx) {
+			$securityCkr = $securityCtx; // Symfony has a single context for the token and the authorization checker
+		} else {
+			$securityCtx = $thisCtx->getContainer()->get('security.token_storage', self::NULL_ON_INVALID_REFERENCE);
+			$securityCkr = $thisCtx->getContainer()->get('securoty.authorization_checker', self::NULL_ON_INVALID_REFERENCE);
+		}
+		$securityToken = ($securityCtx ? $securityCtx->getToken() : null);
 		$isAuthenticated = false;
 		$authType = '';
 		$attributes = array();
@@ -128,18 +140,18 @@ class Symfony {
 		$isEnabled = '';
 		$roles = array();
 		$tokenClass = 'No security token available';
-	
+
 		if ($securityToken) {
 			$attributes = $securityToken->getAttributes();
 			$tokenClass = get_class($securityToken);
 			
 			$isAuthenticated = $securityToken->isAuthenticated();
-			if ($isAuthenticated) {
-				if ($securityCtx->isGranted('IS_AUTHENTICATED_FULLY')) {
+			if ($securityCkr && $isAuthenticated) {
+				if ($securityCkr->isGranted('IS_AUTHENTICATED_FULLY')) {
 					$authType = 'IS_AUTHENTICATED_FULLY';
-				} else if ($securityCtx->isGranted('IS_AUTHENTICATED_REMEMBERED')) {
+				} else if ($securityCkr->isGranted('IS_AUTHENTICATED_REMEMBERED')) {
 					$authType = 'IS_AUTHENTICATED_REMEMBERED';
-				} else if ($securityCtx->isGranted('IS_AUTHENTICATED_ANONYMOUSLY')) {
+				} else if ($securityCkr->isGranted('IS_AUTHENTICATED_ANONYMOUSLY')) {
 					$authType = 'IS_AUTHENTICATED_ANONYMOUSLY';
 				} else {
 					$authType = 'Unknown';
@@ -179,15 +191,19 @@ class Symfony {
 	
 	public function logAddRecordExit($context, &$storage) {
 		static $logCount = 0;
+		$levelnames = array (
+			100 => 'Debug', 200 => 'Info', 250 => 'Notice', 300 => 'Warning', 400 => 'Error',
+			500 => 'Critical', 550 => 'Alert', 600 => 'Emergency'
+		);
 
-		$record = $context['locals']['record'];
-		
+		$level = $context['functionArgs'][0];
+		$message = $context['functionArgs'][1];
 
 		$storage['Monolog'][] = array(
 						'#' => ++$logCount,
-						'message' => $record['message'],
-						'level' => $record['level_name'],
-						'channel' => $record['channel'],
+						'message' => $message,
+						'level' => isset ($levelnames[$level]) ? $levelnames[$level] : $level,
+						'channel' => $context['this']->getName(),
 					);
 	}
 }
@@ -208,5 +224,3 @@ $zre->traceFunction("Symfony\Component\HttpKernel\HttpKernel::handle", function(
 $zre->traceFunction("Symfony\Component\EventDispatcher\EventDispatcher::dispatch", function(){}, array($zraySymfony, 'eventDispatchExit'));
 $zre->traceFunction("AppKernel::registerBundles", function(){}, array($zraySymfony, 'registerBundlesExit'));
 $zre->traceFunction("Monolog\Logger::addRecord", function(){}, array($zraySymfony, 'logAddRecordExit'));
-
-
