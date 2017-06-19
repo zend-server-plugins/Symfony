@@ -19,11 +19,12 @@ class Symfony {
 
 	public function eventDispatchExit($context, &$storage) {
 		if(!$context['functionArgs'][1]) { return; }
+		$eventname = $context['functionArgs'][0];
 		$event = $context['functionArgs'][1];
 		$storage['events'][] = array(	
-						'name' => $event->getName(),
+						'name' => $eventname,
 						'type' => get_class($event),
-						'dispatcher' => get_class($event->getDispatcher()),
+						'dispatcher' => get_class($context['this']),
 						'propagation stopped' => $event->isPropagationStopped(),
 						);
 	}
