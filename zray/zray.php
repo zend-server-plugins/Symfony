@@ -18,18 +18,18 @@ class Symfony {
 
 
 	public function eventDispatchExit($context, &$storage) {
-		if(!$context['functionArgs'][1]) { return; }
-		$event = $context['functionArgs'][1];
+		if(!$context['functionArgs'][0]) { return; }
+		$event = $context['functionArgs'][0];
 
 		//Laravel 3 fixes
 		if(!method_exists ( $event ,'getName' ) ){
-		$name = $context['functionArgs'][0];
+			$name = (!empty($context['functionArgs'][1])) ? $context['functionArgs'][1] : 'N/A';
 		}else{
 			$name = $event->getName();
 		}
 
 		if(!method_exists ( $event ,'getDispatcher' ) ){
-		$dispatcher = 'N/A';
+			$dispatcher = 'N/A';
 		}else{
 			$dispatcher = $event->getDispatcher();
 		}
