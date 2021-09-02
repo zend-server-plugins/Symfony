@@ -1,0 +1,23 @@
+Unreleased
+  * Add changelog.txt file
+
+1.0.6 - 2020.03.16
+  * Symfony EventDispatcher::dispatch() method arguments order has been changed: the event object is the first argument and optional name second argument.
+
+1.0.5 - 2017.11.14
+  * Fix bug with Symfony
+
+1.0.4 - 2017.09.28
+  * Laravel 3 fixes
+
+1.0.3 - 2015.08.31
+  * New Logs panel
+
+1.0.2 - 2015.07.07
+  * Prevent Symfony-based but different applications for running this plugin (since it will not working appropriate)
+
+1.0.1 - 2015.06.08
+  * Added readme and dependencies
+
+1.0.0 - 2015.04.28
+  * New Plugin
