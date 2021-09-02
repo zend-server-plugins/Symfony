@@ -20,10 +20,25 @@ class Symfony {
 	public function eventDispatchExit($context, &$storage) {
 		if(!$context['functionArgs'][1]) { return; }
 		$event = $context['functionArgs'][1];
-		$storage['events'][] = array(	
-						'name' => $event->getName(),
+
+		//Laravel 3 fixes
+		if(!method_exists ( $event ,'getName' ) ){
+		$name = $context['functionArgs'][0];
+		}else{
+			$name = $event->getName();
+		}
+
+		if(!method_exists ( $event ,'getDispatcher' ) ){
+		$dispatcher = 'N/A';
+		}else{
+			$dispatcher = $event->getDispatcher();
+		}
+
+
+		$storage['events'][] = array(
+						'name' => $name,
 						'type' => get_class($event),
-						'dispatcher' => get_class($event->getDispatcher()),
+						'dispatcher' => $dispatcher,
 						'propagation stopped' => $event->isPropagationStopped(),
 						);
 	}
@@ -43,7 +58,7 @@ class Symfony {
 
 	public function handleRequestExit($context, &$storage) {
 		$request = $context['functionArgs'][0];
-		
+
 		if (empty($request)) {
 			return;
 		}
@@ -74,7 +89,7 @@ class Symfony {
 						'Action' => $action,
 						'Filename' => $filename,
 						'Line Number' => $lineno,
-						'Route' => array(	
+						'Route' => array(
 							'Name' => $request->get('_route'),
 							'Params' => $request->get('_routeparams'),
 							),
@@ -114,8 +129,13 @@ class Symfony {
 			}
 		}
 		$storage['listeners'][] = $listenerEntries;
+		try {
 		$securityCtx = $thisCtx->getContainer()->get('security.context');
-		$securityToken = ($securityCtx ? $securityCtx->getToken() : null);
+		}catch(\Exception $e){
+		$securityCtxToken = $thisCtx->getContainer()->get('security.token_storage');
+		$securityCtxGrunt = $thisCtx->getContainer()->get('security.authorization_checker');
+		}
+		$securityToken = ($securityCtxToken ? $securityCtxToken->getToken() : null);
 
 		$isAuthenticated = false;
 		$authType = '';
@@ -128,18 +148,18 @@ class Symfony {
 		$isEnabled = '';
 		$roles = array();
 		$tokenClass = 'No security token available';
-	
+
 		if ($securityToken) {
 			$attributes = $securityToken->getAttributes();
 			$tokenClass = get_class($securityToken);
-			
+
 			$isAuthenticated = $securityToken->isAuthenticated();
 			if ($isAuthenticated) {
-				if ($securityCtx->isGranted('IS_AUTHENTICATED_FULLY')) {
+				if ($securityCtxGrunt->isGranted('IS_AUTHENTICATED_FULLY')) {
 					$authType = 'IS_AUTHENTICATED_FULLY';
-				} else if ($securityCtx->isGranted('IS_AUTHENTICATED_REMEMBERED')) {
+				} else if ($securityCtxGrunt->isGranted('IS_AUTHENTICATED_REMEMBERED')) {
 					$authType = 'IS_AUTHENTICATED_REMEMBERED';
-				} else if ($securityCtx->isGranted('IS_AUTHENTICATED_ANONYMOUSLY')) {
+				} else if ($securityCtxGrunt->isGranted('IS_AUTHENTICATED_ANONYMOUSLY')) {
 					$authType = 'IS_AUTHENTICATED_ANONYMOUSLY';
 				} else {
 					$authType = 'Unknown';
@@ -176,12 +196,12 @@ class Symfony {
 						);
 
 	}
-	
+
 	public function logAddRecordExit($context, &$storage) {
 		static $logCount = 0;
 
 		$record = $context['locals']['record'];
-		
+
 
 		$storage['Monolog'][] = array(
 						'#' => ++$logCount,
