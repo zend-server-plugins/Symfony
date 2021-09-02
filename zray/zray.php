@@ -135,7 +135,7 @@ class Symfony {
 		$securityCtxToken = $thisCtx->getContainer()->get('security.token_storage');
 		$securityCtxGrunt = $thisCtx->getContainer()->get('security.authorization_checker');
 		}
-		$securityToken = ($securityCtxToken ? $securityCtxToken->getToken() : null);
+		$securityToken = (isset($securityCtxToken) ? $securityCtxToken->getToken() : null);
 
 		$isAuthenticated = false;
 		$authType = '';

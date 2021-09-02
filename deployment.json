@@ -1,7 +1,7 @@
 {
   "name" : "symfony",
   "display_name" : "Symfony",
-  "version" : "1.0.4",
+  "version" : "1.0.5",
   "type": ["zray", "route"],
   "logo": "logo.png",
   "eula": "LICENSE.txt",
