@@ -18,13 +18,29 @@ class Symfony {
 
 
 	public function eventDispatchExit($context, &$storage) {
-		if(!$context['functionArgs'][0]) { return; }
-		$event = $context['functionArgs'][0];
+
+		// The arguments order of EventDispatcher::dispatch() method has changed with that commit:
+		// https://github.com/symfony/symfony/commit/75369dabb8af73b0d0ad7f206d85c08cf39117f8#diff-85cb8e51b93fa5b47bf21ced693087e38c7331684d8c4188724127d6c85da74d
+		// In order to support Symfony versions before and after that change, we check if the first
+		// argument is an object. If yes, then we can get the event object from first argument and name
+		// from the second (newer version of Symfony). And if not, we assume that the name string is first
+		// argument and event object second argument.
+		if (is_object($context['functionArgs'][0])) {
+			$event = $context['functionArgs'][0];
+			$name = $context['functionArgs'][1];
+		} else {
+			$event = $context['functionArgs'][1];
+			$name = $context['functionArgs'][0];
+		}
+
+		if (empty($event)) {
+			return;
+		}
 
 		//Laravel 3 fixes
 		if(!method_exists ( $event ,'getName' ) ){
-			$name = (!empty($context['functionArgs'][1])) ? $context['functionArgs'][1] : 'N/A';
-		}else{
+			$name = (!empty($name)) ? $name : 'N/A';
+		} else {
 			$name = $event->getName();
 		}
 
@@ -33,7 +49,6 @@ class Symfony {
 		}else{
 			$dispatcher = $event->getDispatcher();
 		}
-
 
 		$storage['events'][] = array(
 						'name' => $name,
